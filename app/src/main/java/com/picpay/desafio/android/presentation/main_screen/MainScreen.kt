@@ -16,10 +16,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.picpay.desafio.android.R
 import com.picpay.desafio.android.presentation.main_screen.component.UserItem
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreenRoot(
-    viewModel: MainViewModel
+    viewModel: MainViewModel = koinViewModel<MainViewModel>()
 ) {
     val state = viewModel.state.collectAsState()
     MainScreen(state = state.value)

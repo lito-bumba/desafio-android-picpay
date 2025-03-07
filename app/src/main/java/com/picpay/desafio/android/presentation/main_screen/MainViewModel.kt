@@ -1,14 +1,10 @@
 package com.picpay.desafio.android.presentation.main_screen
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.picpay.desafio.android.data.repository.UserRepositoryImpl
-import com.picpay.desafio.android.di.AppModule
 import com.picpay.desafio.android.domain.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asFlow
@@ -32,7 +28,6 @@ class MainViewModel(
         job?.cancel()
         job = viewModelScope.launch {
             _state.update { MainState.Loading }
-            delay(TIME_TO_FETCH_DATA)
             try {
                 repository.getUsers()
                     .asFlow()
@@ -50,19 +45,6 @@ class MainViewModel(
                 _state.update {
                     MainState.Error(exception.message)
                 }
-            }
-        }
-    }
-
-    companion object {
-        private const val TIME_TO_FETCH_DATA = 300L
-
-        fun create() = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                val service = AppModule.service
-                val repository = UserRepositoryImpl(service)
-                return MainViewModel(repository) as T
             }
         }
     }
