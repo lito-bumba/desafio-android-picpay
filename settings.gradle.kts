@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "desafio-android-picpay"
-include ':app'
+include(":app")
