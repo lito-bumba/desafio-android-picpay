@@ -60,7 +60,6 @@ dependencies {
     implementation(libs.converter.gson)
 
     implementation(libs.okhttp)
-    implementation(libs.mockwebserver)
 
     implementation(libs.koin.androidx.compose)
     testImplementation(libs.koin.test.junit4)
@@ -68,12 +67,10 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.androidx.core.testing)
 
-    testImplementation(libs.mockito.core)
-    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.mockk)
 
     androidTestImplementation(libs.core.ktx)
     androidTestImplementation(libs.androidx.runner)
 
     androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }

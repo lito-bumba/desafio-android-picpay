@@ -10,9 +10,7 @@ class UserRepositoryImpl(
 ) : UserRepository {
 
     override suspend fun getUsers(): List<User> {
-        return service.getUsers()
-            .map {
-                it.toUser()
-            }
+        val users = service.getUsers()
+        return users.map { it.toUser() }
     }
 }
