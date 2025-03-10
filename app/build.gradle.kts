@@ -62,15 +62,17 @@ dependencies {
     implementation(libs.okhttp)
 
     implementation(libs.koin.androidx.compose)
-    testImplementation(libs.koin.test.junit4)
 
+    testImplementation(libs.koin.test.junit4)
     testImplementation(libs.junit)
     testImplementation(libs.androidx.core.testing)
-
     testImplementation(libs.mockk)
 
-    androidTestImplementation(libs.core.ktx)
-    androidTestImplementation(libs.androidx.runner)
 
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

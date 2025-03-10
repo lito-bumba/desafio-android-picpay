@@ -3,5 +3,6 @@
     <string name="title">Contatos</string>
     <string name="error">Ocorreu um erro. Tente novamente.</string>
     <string name="profile_picture">Profile picture</string>
+    <string name="progress_indicator">progress-indicator</string>
 
 </resources>
