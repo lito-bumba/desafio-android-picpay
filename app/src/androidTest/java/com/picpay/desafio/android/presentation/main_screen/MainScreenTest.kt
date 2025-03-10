@@ -27,7 +27,7 @@ class MainScreenTest {
     fun whenMainScreenGetUsersSuccessfully() {
         composeTestRule.setContent {
             val viewModel = MainViewModel(repository)
-            MainScreenRoot(viewModel)
+            MainScreen(viewModel)
         }
 
         composeTestRule.waitForIdle()
@@ -43,7 +43,7 @@ class MainScreenTest {
 
         composeTestRule.setContent {
             val viewModel = MainViewModel(repository)
-            MainScreenRoot(viewModel)
+            MainScreen(viewModel)
         }
 
         composeTestRule.waitForIdle()

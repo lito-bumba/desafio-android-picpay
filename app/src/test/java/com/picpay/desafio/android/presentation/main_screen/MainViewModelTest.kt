@@ -4,12 +4,20 @@ package com.picpay.desafio.android.presentation.main_screen
 
 import com.picpay.desafio.android.domain.model.User
 import com.picpay.desafio.android.domain.repository.UserRepository
+import io.mockk.Awaits
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -52,42 +60,81 @@ class MainViewModelTest : KoinTest {
     @Test
     fun whenGetInitialStateShouldReturnLoadingState() = runTest {
         val initialState = mainViewModel.state.first()
-        assertEquals(MainState.Loading, initialState)
+        assertEquals(MainState(isLoading = true), initialState)
     }
 
     @Test
-    fun whenGetUsersSuccessfullyShouldReturnSuccessState() = runTest {
-        val user = User(img = "img", name = "test", id = 1, username = "test")
-        val users: List<User> = listOf(user, user)
-        coEvery { repository.getUsers() } returns users
+    fun whenGetUsersSuccessfullyShouldReturnListOfUsers() = runTest {
+        val usersFlow = flowOf(emptyList<User>())
+        coEvery { repository.getUsers() } returns Result.success(usersFlow)
+
+        coEvery { repository.syncUsers() } just Awaits
+
+        val collectedUsers = mutableListOf<List<User>>()
+        val job = launch {
+            mainViewModel.state.map { it.users }.toList(collectedUsers)
+        }
+
 
         mainViewModel.fetchUsers()
         runCurrent()
 
         coVerify { repository.getUsers() }
+        coVerify { repository.syncUsers() }
 
-        val state = mainViewModel.state.first()
-        assert(state is MainState.Success)
+        assertEquals(collectedUsers.last(), emptyList<User>())
+        assertEquals(collectedUsers.last().size, 0)
 
-        val result = state as MainState.Success
-        assertEquals(users.size, result.users.size)
-        assertEquals(users, result.users)
+        job.cancel()
     }
 
     @Test
-    fun whenGetUsersGetErrorShouldReturnErrorStateWithMessage() = runTest {
+    fun whenGetUsersGetErrorShouldReturnErrorMessage() = runTest {
+        val errorMessage = "mocked error"
+        coEvery { repository.getUsers() } returns Result.failure(Exception(errorMessage))
+        coEvery { repository.syncUsers() } just Awaits
+
+        mainViewModel.state.collect { state ->
+            assertEquals(errorMessage, state.error)
+        }
+
+        mainViewModel.fetchUsers()
+        runCurrent()
+
+        coVerify { repository.getUsers() }
+        coVerify { repository.syncUsers() }
+
+        val state = mainViewModel.state.first()
+        assert(state.isLoading == false)
+        assertEquals(errorMessage, state.error)
+    }
+
+    @Test
+    fun whenSyncUsersSuccessfullyShouldReturnSuccessState() = runTest {
+        coEvery { repository.syncUsers() } returns Result.success(Unit)
+
+        mainViewModel.syncUsers()
+        runCurrent()
+
+        coVerify { repository.syncUsers() }
+
+        val state = mainViewModel.state.first()
+        assert(state.isSyncing == false)
+        assertEquals(null, state.syncError)
+    }
+
+    @Test
+    fun whenSyncUsersGetErrorShouldReturnErrorStateWithMessage() = runTest {
         val errorMessage = "mocked error"
         coEvery { repository.getUsers() } throws Exception(errorMessage)
 
-        mainViewModel.fetchUsers()
+//        mainViewModel.fetchUsers()
         runCurrent()
 
         coVerify { repository.getUsers() }
 
         val state = mainViewModel.state.first()
-        assert(state is MainState.Error)
-
-        val result = state as MainState.Error
-        assertEquals(result.message, errorMessage)
+        assert(state.isLoading == false)
+        assertEquals(errorMessage, state.error)
     }
 }

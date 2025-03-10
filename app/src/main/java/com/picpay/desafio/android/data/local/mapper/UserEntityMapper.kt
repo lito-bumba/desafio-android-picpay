@@ -12,10 +12,6 @@ fun UserEntity.toUser(): User {
     )
 }
 
-fun List<UserEntity>.toUsers(): List<User> {
-    return this.map { it.toUser() }
-}
-
 fun User.toUserEntity(): UserEntity {
     return UserEntity(
         id = this.id,
@@ -23,8 +19,4 @@ fun User.toUserEntity(): UserEntity {
         username = this.username,
         img = this.img
     )
-}
-
-fun List<User>.toUserEntities(): List<UserEntity> {
-    return this.map { it.toUserEntity() }
 }
