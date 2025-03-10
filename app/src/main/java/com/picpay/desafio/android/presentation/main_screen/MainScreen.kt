@@ -9,12 +9,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.picpay.desafio.android.R
 import com.picpay.desafio.android.presentation.main_screen.component.UserItem
 import org.koin.androidx.compose.koinViewModel
@@ -23,7 +23,7 @@ import org.koin.androidx.compose.koinViewModel
 fun MainScreenRoot(
     viewModel: MainViewModel = koinViewModel<MainViewModel>()
 ) {
-    val state = viewModel.state.collectAsState()
+    val state = viewModel.state.collectAsStateWithLifecycle()
     MainScreen(state = state.value)
 }
 

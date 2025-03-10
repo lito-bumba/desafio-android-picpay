@@ -2,11 +2,14 @@ package com.picpay.desafio.android.di
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.picpay.desafio.android.data.local.AppDatabase
+import com.picpay.desafio.android.data.local.UserDao
 import com.picpay.desafio.android.data.remote.PicPayService
 import com.picpay.desafio.android.data.repository.UserRepositoryImpl
 import com.picpay.desafio.android.domain.repository.UserRepository
 import com.picpay.desafio.android.presentation.main_screen.MainViewModel
 import okhttp3.OkHttpClient
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
@@ -34,6 +37,11 @@ private val retrofit: PicPayService by lazy {
 
 
 val appModule = module {
+
+    single { AppDatabase.createDatabase(androidContext()) }.bind<AppDatabase>()
+
+    singleOf(AppDatabase::userDao).bind<UserDao>()
+
     singleOf(::retrofit).bind<PicPayService>()
 
     factoryOf(::UserRepositoryImpl).bind<UserRepository>()

@@ -12,6 +12,10 @@ fun UserDto.toUser(): User {
     )
 }
 
+fun List<UserDto>.toUsers(): List<User> {
+    return this.map { it.toUser() }
+}
+
 fun User.toUserDto(): UserDto {
     return UserDto(
         id = this.id,
