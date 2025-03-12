@@ -123,4 +123,5 @@ class MainViewModelTest : KoinTest {
             assertEquals(expectedErrorMessage, state.syncError)
         }
     }
+
 }

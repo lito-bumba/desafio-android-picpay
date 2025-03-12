@@ -50,7 +50,8 @@ fun MainScreen(
                 viewModel.syncUsers { errorMessage ->
                     Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                 }
-            }
+            },
+            modifier = Modifier.testTag(stringResource(R.string.pull_to_refresh))
         ) {
             Column(
                 modifier = Modifier
@@ -90,6 +91,7 @@ fun MainScreen(
                         else -> {
                             LazyColumn(
                                 modifier = Modifier
+                                    .testTag(stringResource(R.string.user_list))
                                     .fillMaxSize()
                             ) {
                                 items(state.value.users) { user ->
@@ -101,7 +103,6 @@ fun MainScreen(
                                 }
                             }
                         }
-
                     }
                 }
             }

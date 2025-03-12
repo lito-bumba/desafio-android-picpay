@@ -4,5 +4,6 @@
     <string name="error">Ocorreu um erro. Tente novamente.</string>
     <string name="profile_picture">Profile picture</string>
     <string name="progress_indicator">progress-indicator</string>
-
+    <string name="user_list">user-list</string>
+    <string name="pull_to_refresh">pull to refresh</string>
 </resources>
