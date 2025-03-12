@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainViewModel(
     private val repository: UserRepository
@@ -49,7 +50,7 @@ class MainViewModel(
         }
     }
 
-    fun syncUsers(isFirstTime: Boolean = false) {
+    fun syncUsers(isFirstTime: Boolean = false, onError: ((String?) -> Unit)? = null) {
         if (state.value.error != null) {
             fetchUsers()
             return
@@ -64,9 +65,6 @@ class MainViewModel(
                 )
             }
 
-            if (!isFirstTime) {
-                delay(300)
-            }
             repository.syncUsers()
                 .onSuccess {
                     if (!isFirstTime) {
@@ -78,12 +76,16 @@ class MainViewModel(
                         }
                     }
                 }.onFailure { exception ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            syncError = exception.message,
-                            isSyncing = false
-                        )
+                    val errorMessage = exception.message
+                    withContext(Dispatchers.Main) {
+                        onError?.invoke(errorMessage)
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                syncError = errorMessage,
+                                isSyncing = false
+                            )
+                        }
                     }
                 }
         }

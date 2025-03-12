@@ -2,29 +2,16 @@
 
 package com.picpay.desafio.android.presentation.main_screen
 
+import app.cash.turbine.test
+import com.picpay.desafio.android.data.FakeUserRepository
 import com.picpay.desafio.android.domain.model.User
-import com.picpay.desafio.android.domain.repository.UserRepository
-import io.mockk.Awaits
-import io.mockk.Runs
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.just
-import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
+import com.picpay.desafio.android.util.TestDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -36,105 +23,104 @@ import kotlin.test.assertEquals
 
 class MainViewModelTest : KoinTest {
 
+    private val repository = FakeUserRepository()
     private val testModule = module {
-        single<UserRepository> { mockk() }
-        viewModel { MainViewModel(get()) }
+        viewModel { MainViewModel(repository) }
     }
 
-    private val repository: UserRepository by inject()
-    private val mainViewModel: MainViewModel by inject()
-    private val testDispatcher = StandardTestDispatcher()
+    private val viewModel: MainViewModel by inject()
+
+    @get:Rule
+    val dispatcherRule = TestDispatcherRule()
 
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         startKoin { modules(testModule) }
     }
 
     @After
     fun teardown() {
         stopKoin()
-        Dispatchers.resetMain()
     }
 
     @Test
-    fun whenGetInitialStateShouldReturnLoadingState() = runTest {
-        val initialState = mainViewModel.state.first()
-        assertEquals(MainState(isLoading = true), initialState)
+    fun whenFetchUsersIsLoadingShouldReturnIsLoading() = runTest {
+        val state = viewModel.state.first()
+        assertEquals(MainState(isLoading = true), state)
     }
 
     @Test
-    fun whenGetUsersSuccessfullyShouldReturnListOfUsers() = runTest {
-        val usersFlow = flowOf(emptyList<User>())
-        coEvery { repository.getUsers() } returns Result.success(usersFlow)
+    fun whenFetchUsersGetSuccessShouldReturnTheUsers() = runTest {
+        val expectedUsers = listOf(
+            User(
+                id = 1,
+                name = "test-name",
+                username = "test-username",
+                img = "test-img"
+            )
+        )
+        viewModel.state.test {
+            awaitItem()
 
-        coEvery { repository.syncUsers() } just Awaits
-
-        val collectedUsers = mutableListOf<List<User>>()
-        val job = launch {
-            mainViewModel.state.map { it.users }.toList(collectedUsers)
+            val state = awaitItem()
+            assertEquals(false, state.isLoading)
+            assertEquals(expectedUsers, state.users)
+            assertEquals(null, state.error)
         }
-
-
-        mainViewModel.fetchUsers()
-        runCurrent()
-
-        coVerify { repository.getUsers() }
-        coVerify { repository.syncUsers() }
-
-        assertEquals(collectedUsers.last(), emptyList<User>())
-        assertEquals(collectedUsers.last().size, 0)
-
-        job.cancel()
     }
 
     @Test
-    fun whenGetUsersGetErrorShouldReturnErrorMessage() = runTest {
-        val errorMessage = "mocked error"
-        coEvery { repository.getUsers() } returns Result.failure(Exception(errorMessage))
-        coEvery { repository.syncUsers() } just Awaits
+    fun whenFetchUsersGetErrorShouldReturnErrorMessage() = runTest {
+        val expectedErrorMessage = "get-users-test-error"
+        repository.setGetUsersError()
 
-        mainViewModel.state.collect { state ->
-            assertEquals(errorMessage, state.error)
+        viewModel.state.test {
+            awaitItem()
+
+            val state = awaitItem()
+            assertEquals(false, state.isLoading)
+            assertEquals(expectedErrorMessage, state.error)
         }
-
-        mainViewModel.fetchUsers()
-        runCurrent()
-
-        coVerify { repository.getUsers() }
-        coVerify { repository.syncUsers() }
-
-        val state = mainViewModel.state.first()
-        assert(state.isLoading == false)
-        assertEquals(errorMessage, state.error)
     }
 
     @Test
-    fun whenSyncUsersSuccessfullyShouldReturnSuccessState() = runTest {
-        coEvery { repository.syncUsers() } returns Result.success(Unit)
+    fun whenSyncUsersIsLoadingShouldReturnIsSyncing() = runTest {
+        viewModel.state.test {
+            awaitItem()
 
-        mainViewModel.syncUsers()
-        runCurrent()
+            viewModel.syncUsers()
+            val state = awaitItem()
 
-        coVerify { repository.syncUsers() }
+            awaitItem()
 
-        val state = mainViewModel.state.first()
-        assert(state.isSyncing == false)
-        assertEquals(null, state.syncError)
+            assertEquals(MainState(isSyncing = true), state)
+        }
     }
 
     @Test
-    fun whenSyncUsersGetErrorShouldReturnErrorStateWithMessage() = runTest {
-        val errorMessage = "mocked error"
-        coEvery { repository.getUsers() } throws Exception(errorMessage)
+    fun whenSyncUsersGetSuccessShouldReturnNothing() = runTest {
+        viewModel.syncUsers()
+        viewModel.state.test {
+            awaitItem()
 
-//        mainViewModel.fetchUsers()
-        runCurrent()
+            val state = awaitItem()
+            assertEquals(false, state.isSyncing)
+            assertEquals(null, state.syncError)
+        }
+    }
 
-        coVerify { repository.getUsers() }
+    @Test
+    fun whenSyncUsersGetErrorShouldReturnErrorMessage() = runTest {
+        val expectedErrorMessage = "sync-users-test-error"
+        repository.setSyncUsersError()
 
-        val state = mainViewModel.state.first()
-        assert(state.isLoading == false)
-        assertEquals(errorMessage, state.error)
+        viewModel.state.test {
+            awaitItem()
+
+            val state = awaitItem()
+            assertEquals(false, state.isLoading)
+            assertEquals(false, state.isSyncing)
+            assertEquals(expectedErrorMessage, state.syncError)
+        }
     }
 }

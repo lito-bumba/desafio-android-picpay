@@ -46,7 +46,11 @@ fun MainScreen(
     ) {
         PullToRefreshBox(
             isRefreshing = state.value.isSyncing,
-            onRefresh = viewModel::syncUsers
+            onRefresh = {
+                viewModel.syncUsers { errorMessage ->
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                }
+            }
         ) {
             Column(
                 modifier = Modifier
@@ -99,10 +103,6 @@ fun MainScreen(
                         }
 
                     }
-                }
-
-                if (state.value.syncError != null) {
-                    Toast.makeText(context, state.value.syncError, Toast.LENGTH_SHORT).show()
                 }
             }
         }
